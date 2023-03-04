@@ -2,8 +2,11 @@ baseURL = 'https://travis.emslander.co/'
 languageCode = 'en-us'
 title = 'Travis Emslander'
 theme = "m10c"
-author = 'Travis Emslander'
-description = 'Technology leader located in Minneapolis, MN'
+
+[params]
+	author = 'Travis Emslander'
+	description = 'Technology leader located in Minneapolis, MN'
+	avatar = 'travis-profile.jpg'
 
 [[params.social]]
 	icon = "github"
