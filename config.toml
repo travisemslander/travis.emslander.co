@@ -1,0 +1,16 @@
+baseURL = 'https://travis.emslander.co/'
+languageCode = 'en-us'
+title = 'Travis Emslander'
+theme = "m10c"
+author = 'Travis Emslander'
+description = 'Technology leader located in Minneapolis, MN'
+
+[[params.social]]
+	icon = "github"
+	name = "My Github"
+	url = "https://github.com/travisemslander"
+[[params.social]]
+	icon = "linkedin"
+	name = "My LinkedIn"
+	url = "https://linkedin.com/in/travis-emslander"
+
