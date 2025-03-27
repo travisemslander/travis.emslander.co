@@ -1,8 +1,16 @@
 {
+    "id": "name-display.hello",
     "name": "Travis Hello",
     "short_name": "Hello",
     "start_url": "/name-display/hello/",
     "display": "fullscreen",
     "background_color": "#afafaf",
-    "theme_color": "#afafaf"
+    "theme_color": "#afafaf",
+    "icons": [
+        {
+          "src": "icon-144x144.png",
+          "sizes": "144x144",
+          "type": "image/png"
+        }
+      ]
   }
