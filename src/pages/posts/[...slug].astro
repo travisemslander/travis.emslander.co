@@ -1,0 +1,142 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { enrichPosts } from '../../utils/posts';
+
+export async function getStaticPaths() {
+  const rawEntries = await getCollection('posts');
+  const enriched = enrichPosts(rawEntries);
+
+  return enriched.map((post, idx) => {
+    const newerPost = idx > 0 ? enriched[idx - 1] : null;
+    const olderPost = idx < enriched.length - 1 ? enriched[idx + 1] : null;
+    return {
+      params: { slug: post.slug },
+      props: { post, newerPost, olderPost },
+    };
+  });
+}
+
+const { post, newerPost, olderPost } = Astro.props;
+const { Content } = await post.entry.render();
+---
+
+<BaseLayout title={post.title} description={post.excerpt}>
+  <article class="mx-auto max-w-2xl">
+    <!-- Top Navigation -->
+    <div class="mb-8 flex items-center justify-between">
+      <a
+        href="/"
+        class="inline-flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+      >
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        All posts
+      </a>
+
+      <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+        {post.topic}
+      </span>
+    </div>
+
+    <!-- Article Header -->
+    <header class="mb-8 border-b border-[var(--border-subtle)] pb-7">
+      <div class="flex flex-wrap items-center gap-2.5 font-mono text-xs text-[var(--text-muted)]">
+        <time datetime={post.dateIso}>{post.dateFormatted}</time>
+        <span>·</span>
+        <span>{post.readingTime} min read</span>
+        {
+          post.primaryDomain && (
+            <>
+              <span>·</span>
+              <span class="text-emerald-400/90">↗ {post.primaryDomain}</span>
+            </>
+          )
+        }
+      </div>
+
+      <h1 class="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl sm:leading-[1.18]">
+        {post.title}
+      </h1>
+    </header>
+
+    <!-- Markdown Content -->
+    <div
+      class="prose prose-zinc dark:prose-invert max-w-none
+        prose-p:leading-relaxed prose-p:text-[var(--text-secondary)]
+        prose-headings:text-[var(--text-primary)] prose-headings:font-semibold
+        prose-a:text-emerald-400 prose-a:underline prose-a:decoration-emerald-500/40 prose-a:underline-offset-4 hover:prose-a:decoration-emerald-400
+        prose-blockquote:border-l-emerald-500/60 prose-blockquote:bg-[var(--bg-elevated)] prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-xl prose-blockquote:not-italic
+        prose-code:rounded prose-code:bg-[var(--bg-elevated)] prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-emerald-400 prose-code:before:content-none prose-code:after:content-none
+        prose-img:rounded-xl prose-img:border prose-img:border-[var(--border-subtle)]"
+    >
+      <Content />
+    </div>
+
+    <!-- Referenced Links Card (if external links exist) -->
+    {
+      post.externalLinks.length > 0 && (
+        <aside class="mt-10 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4 sm:p-5">
+          <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            Referenced Links
+          </h2>
+          <ul class="mt-3 space-y-2">
+            {post.externalLinks.map((lnk) => (
+              <li>
+                <a
+                  href={lnk.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  class="group flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-xs transition hover:border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]"
+                >
+                  <span class="font-medium text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors truncate">
+                    {lnk.text}
+                  </span>
+                  <span class="shrink-0 font-mono text-[11px] text-[var(--text-muted)]">
+                    {lnk.domain} ↗
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
+
+    <!-- Older / Newer Post Navigation -->
+    <nav class="mt-12 grid grid-cols-1 gap-4 border-t border-[var(--border-subtle)] pt-8 sm:grid-cols-2">
+      {
+        olderPost ? (
+          <a
+            href={`/posts/${olderPost.slug}/`}
+            class="group flex flex-col justify-between rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4 transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]"
+          >
+            <span class="font-mono text-[11px] text-[var(--text-muted)]">← Older post</span>
+            <span class="mt-1.5 text-sm font-medium text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors line-clamp-2">
+              {olderPost.title}
+            </span>
+          </a>
+        ) : (
+          <div />
+        )
+      }
+
+      {
+        newerPost ? (
+          <a
+            href={`/posts/${newerPost.slug}/`}
+            class="group flex flex-col justify-between rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4 text-right transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]"
+          >
+            <span class="font-mono text-[11px] text-[var(--text-muted)]">Newer post →</span>
+            <span class="mt-1.5 text-sm font-medium text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors line-clamp-2">
+              {newerPost.title}
+            </span>
+          </a>
+        ) : (
+          <div />
+        )
+      }
+    </nav>
+  </article>
+</BaseLayout>

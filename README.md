@@ -1,29 +1,30 @@
-# Travis Emslander personal page
+# Travis Emslander Personal Site
 
-This website is setup using the Hugo static site framework. In order to work with it, it requires [hugo be installed](https://gohugo.io/installation/). If using GitHub Codespaces, it's already installed in the default environment.
+Built with [Astro](https://astro.build/) and [Tailwind CSS](https://tailwindcss.com/).
 
-## Adding a post
+## Adding a Post
 
-1. `hugo new posts/YYYYMMDD-page-title.md`
-    * the specific title does not effect display. The date prefix helps with proper ordering.
-    * you can also create a directory if you'd like to host related static assets such as images for the post. Example: `hugo new posts/YYYYMMDD-page-title/post.md`
-2. Populate the created markdown file
-3. Preview changes (see below)
+1. Create a new Markdown file in `src/content/posts/YYYYMMDD-page-title.md`:
+   ```markdown
+   ---
+   title: "Post Title"
+   date: 2026-10-18T08:00:00-05:00
+   topic: "Engineering" # Optional (or use `tags: ["Engineering"]`); auto-inferred if omitted
+   ---
 
-## Changing theme
+   Post content here...
+   ```
+2. Preview locally with `npm run dev`.
 
-1. Find theme from hugo's theme listing
-2. Add theme as github submodule (e.g. `git submodule add https://github.com/budparr/gohugo-theme-ananke.git themes/ananke`)
-3. Edit theme in `config.toml`
-4. Preview changes (see below)
+## Local Development
 
-## Previewing Changes
+```bash
+npm install
+npm run dev
+```
 
-1. Run `hugo server -D`
-2. Visit the url it gives
-    * Note: when using CodeSpaces you'll want to specify the baseURL and not to append port: `hugo server -D --baseUrl="https://your-github-url" --appendPort=false
-`
+Visit `http://localhost:4321` to preview the site.
 
 ## Publishing Changes
 
-Commit your changes and merge into the main branch. There is a github action configured to automatically publish changes.
+Commit and push changes to `main`. GitHub Actions (`.github/workflows/hugo.yml`) will automatically build the Astro site (`npm ci` & `npm run build`) and deploy `./dist` to GitHub Pages.

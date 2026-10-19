@@ -1,0 +1,330 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { enrichPosts } from '../utils/posts';
+
+const rawPosts = await getCollection('posts');
+const posts = enrichPosts(rawPosts);
+
+const latestPost = posts[0];
+const years = Array.from(new Set(posts.map((p) => p.year)));
+const defaultTopics = ['AI & LLMs', 'Engineering', 'Security', 'Web & Frontend', 'Data & Databases', 'Curiosities'];
+const extraTopics = Array.from(new Set(posts.map((p) => p.topic))).filter((t) => !defaultTopics.includes(t));
+const topics = ['All', ...defaultTopics, ...extraTopics];
+
+const topicCounts = topics.reduce(
+  (acc, t) => {
+    acc[t] = t === 'All' ? posts.length : posts.filter((p) => p.topic === t).length;
+    return acc;
+  },
+  {} as Record<string, number>
+);
+---
+
+<BaseLayout>
+  <!-- Hero Section -->
+  <section class="mb-12">
+    <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-4">
+        <img
+          src="/travis-profile.jpg"
+          alt="Travis Emslander"
+          class="h-16 w-16 rounded-2xl object-cover ring-1 ring-[var(--border-strong)] shadow-lg"
+        />
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+              Travis Emslander
+            </h1>
+            <span class="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[11px] font-medium text-emerald-400">
+              {posts.length} posts
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-[var(--text-secondary)] max-w-xl">
+            Technology leader in Minneapolis, MN. Sharing weekly dispatches on software engineering, AI systems, security, and internet curiosities.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured Latest Dispatch Card -->
+    {
+      latestPost && (
+        <a
+          href={`/posts/${latestPost.slug}/`}
+          class="group relative mt-7 block overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-5 sm:p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-emerald-500/5 hover:shadow-xl"
+        >
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-medium text-emerald-400">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              LATEST POST
+            </span>
+            <span class="font-mono text-[var(--text-muted)]">{latestPost.dateFormatted}</span>
+            <span class="text-[var(--text-muted)]">·</span>
+            <span class="rounded-md border border-[var(--border-subtle)] px-2 py-0.5 text-[11px] text-[var(--text-secondary)]">
+              {latestPost.topic}
+            </span>
+            {latestPost.primaryDomain && (
+              <span class="font-mono text-[11px] text-[var(--text-muted)]">
+                ↗ {latestPost.primaryDomain}
+              </span>
+            )}
+          </div>
+          <h2 class="mt-2.5 text-lg font-semibold tracking-tight text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors sm:text-xl">
+            {latestPost.title}
+          </h2>
+          <p class="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)] line-clamp-2">
+            {latestPost.excerpt}
+          </p>
+        </a>
+      )
+    }
+  </section>
+
+  <!-- Interactive Filter Bar (Topics + Years + Inline Search) -->
+  <section class="mb-8 space-y-3">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <!-- Year Tabs -->
+      <div class="flex flex-wrap items-center gap-1 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-1" id="year-filters">
+        <button
+          type="button"
+          data-year="All"
+          class="year-pill active rounded-lg px-3 py-1 font-mono text-xs font-medium transition"
+        >
+          All Years
+        </button>
+        {
+          years.map((yr) => (
+            <button
+              type="button"
+              data-year={yr}
+              class="year-pill rounded-lg px-3 py-1 font-mono text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+            >
+              {yr}
+            </button>
+          ))
+        }
+      </div>
+
+      <!-- Inline Filter Input -->
+      <div class="relative flex-1 sm:max-w-xs">
+        <svg
+          class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z" />
+        </svg>
+        <input
+          id="inline-filter-input"
+          type="text"
+          placeholder="Filter timeline..."
+          class="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] py-1.5 pl-8 pr-3 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] transition focus:border-emerald-500/50 focus:outline-none"
+        />
+      </div>
+    </div>
+
+    <!-- Topic Pills -->
+    <div class="flex flex-wrap items-center gap-1.5" id="topic-filters">
+      {
+        topics.map((t, idx) => (
+          <button
+            type="button"
+            data-topic={t}
+            class={`topic-pill inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
+              idx === 0
+                ? 'active border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            <span>{t}</span>
+            <span class="font-mono text-[10px] opacity-60">{topicCounts[t]}</span>
+          </button>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Year-Grouped Timeline List -->
+  <div id="timeline-container" class="space-y-12">
+    {
+      years.map((yr) => {
+        const yearPosts = posts.filter((p) => p.year === yr);
+        return (
+          <section class="year-group" data-year-group={yr}>
+            <div class="sticky top-[57px] z-20 mb-4 flex items-center gap-3 bg-[var(--bg-primary)]/90 py-2 backdrop-blur-md">
+              <h2 class="font-mono text-sm font-semibold tracking-wider text-emerald-400">{yr}</h2>
+              <div class="h-px flex-1 bg-[var(--border-subtle)]" />
+              <span class="year-count font-mono text-xs text-[var(--text-muted)]">
+                {yearPosts.length} {yearPosts.length === 1 ? 'post' : 'posts'}
+              </span>
+            </div>
+
+            <div class="divide-y divide-[var(--border-subtle)] rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] overflow-hidden">
+              {yearPosts.map((post) => (
+                <article
+                  class="post-row group transition-colors hover:bg-[var(--bg-hover)]"
+                  data-year={post.year}
+                  data-topic={post.topic}
+                  data-search={`${post.title} ${post.excerpt} ${post.topic} ${post.primaryDomain || ''}`.toLowerCase()}
+                >
+                  <a href={`/posts/${post.slug}/`} class="flex flex-col gap-2 p-4 sm:flex-row sm:items-baseline sm:gap-5 sm:px-5 sm:py-4">
+                    <time
+                      datetime={post.dateIso}
+                      class="w-20 shrink-0 font-mono text-xs text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors"
+                    >
+                      {post.dateShort}
+                    </time>
+
+                    <div class="flex-1 min-w-0">
+                      <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 class="text-sm sm:text-base font-medium text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors">
+                          {post.title}
+                        </h3>
+                        <div class="flex items-center gap-2 shrink-0">
+                          {post.primaryDomain && (
+                            <span class="hidden md:inline-block rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
+                              {post.primaryDomain}
+                            </span>
+                          )}
+                          <span class="rounded-full border border-[var(--border-subtle)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]">
+                            {post.topic}
+                          </span>
+                        </div>
+                      </div>
+                      <p class="mt-1 line-clamp-2 text-xs sm:text-sm leading-relaxed text-[var(--text-secondary)]">
+                        {post.excerpt}
+                      </p>
+                    </div>
+                  </a>
+                </article>
+              ))}
+            </div>
+          </section>
+        );
+      })
+    }
+  </div>
+
+  <div id="empty-filter-state" class="hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] py-16 text-center">
+    <p class="text-sm text-[var(--text-secondary)]">No posts match your current filter.</p>
+    <button
+      id="reset-filters-btn"
+      type="button"
+      class="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition"
+    >
+      Reset filters
+    </button>
+  </div>
+
+  <style>
+    .year-pill.active {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+  </style>
+
+  <script is:inline>
+    function initTimelineFilters() {
+      let activeYear = 'All';
+      let activeTopic = 'All';
+      let query = '';
+
+      const yearBtns = document.querySelectorAll('.year-pill');
+      const topicBtns = document.querySelectorAll('.topic-pill');
+      const filterInput = document.getElementById('inline-filter-input');
+      const rows = document.querySelectorAll('.post-row');
+      const yearGroups = document.querySelectorAll('.year-group');
+      const emptyState = document.getElementById('empty-filter-state');
+      const resetBtn = document.getElementById('reset-filters-btn');
+
+      function applyFilters() {
+        let totalVisible = 0;
+
+        rows.forEach((row) => {
+          const rYear = row.getAttribute('data-year');
+          const rTopic = row.getAttribute('data-topic');
+          const rSearch = row.getAttribute('data-search') || '';
+
+          const matchYear = activeYear === 'All' || rYear === activeYear;
+          const matchTopic = activeTopic === 'All' || rTopic === activeTopic;
+          const matchQuery = !query || rSearch.includes(query);
+
+          if (matchYear && matchTopic && matchQuery) {
+            row.classList.remove('hidden');
+            totalVisible++;
+          } else {
+            row.classList.add('hidden');
+          }
+        });
+
+        yearGroups.forEach((group) => {
+          const visibleInGroup = group.querySelectorAll('.post-row:not(.hidden)').length;
+          const countEl = group.querySelector('.year-count');
+          if (countEl) {
+            countEl.textContent = `${visibleInGroup} ${visibleInGroup === 1 ? 'post' : 'posts'}`;
+          }
+          if (visibleInGroup === 0) {
+            group.classList.add('hidden');
+          } else {
+            group.classList.remove('hidden');
+          }
+        });
+
+        if (emptyState) {
+          if (totalVisible === 0) emptyState.classList.remove('hidden');
+          else emptyState.classList.add('hidden');
+        }
+      }
+
+      yearBtns.forEach((btn) => {
+        btn.onclick = () => {
+          activeYear = btn.getAttribute('data-year') || 'All';
+          yearBtns.forEach((b) => {
+            b.classList.toggle('active', b === btn);
+          });
+          applyFilters();
+        };
+      });
+
+      topicBtns.forEach((btn) => {
+        btn.onclick = () => {
+          activeTopic = btn.getAttribute('data-topic') || 'All';
+          topicBtns.forEach((b) => {
+            if (b === btn) {
+              b.className =
+                'topic-pill active inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 transition';
+            } else {
+              b.className =
+                'topic-pill inline-flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition';
+            }
+          });
+          applyFilters();
+        };
+      });
+
+      if (filterInput) {
+        filterInput.oninput = (e) => {
+          query = (e.target.value || '').trim().toLowerCase();
+          applyFilters();
+        };
+      }
+
+      if (resetBtn) {
+        resetBtn.onclick = () => {
+          activeYear = 'All';
+          activeTopic = 'All';
+          query = '';
+          if (filterInput) filterInput.value = '';
+          if (yearBtns[0]) yearBtns[0].click();
+          if (topicBtns[0]) topicBtns[0].click();
+        };
+      }
+    }
+
+    initTimelineFilters();
+    document.addEventListener('astro:after-swap', initTimelineFilters);
+  </script>
+</BaseLayout>

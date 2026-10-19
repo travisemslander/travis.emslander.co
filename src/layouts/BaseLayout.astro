@@ -1,0 +1,332 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { getCollection } from 'astro:content';
+import { enrichPosts } from '../utils/posts';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Travis Emslander',
+  description = 'Technology leader located in Minneapolis, MN — notes on software engineering, AI, security, and curiosities.',
+} = Astro.props;
+
+const pageTitle = title === 'Travis Emslander' ? title : `${title} · Travis Emslander`;
+
+const allEntries = await getCollection('posts');
+const searchIndex = enrichPosts(allEntries).map((p) => ({
+  slug: p.slug,
+  title: p.title,
+  date: p.dateFormatted,
+  year: p.year,
+  topic: p.topic,
+  domain: p.primaryDomain,
+  excerpt: p.excerpt,
+}));
+---
+
+<!doctype html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="Travis Emslander" />
+    <link rel="alternate" type="application/rss+xml" title="Travis Emslander" href="/rss.xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <ClientRouter />
+    <script is:inline>
+      function applyTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      }
+      applyTheme();
+      document.addEventListener('astro:after-swap', applyTheme);
+    </script>
+    <style is:global>
+      :root {
+        --bg-primary: #fafafa;
+        --bg-elevated: #ffffff;
+        --bg-hover: #f4f4f5;
+        --border-subtle: rgba(24, 24, 27, 0.09);
+        --border-strong: rgba(24, 24, 27, 0.16);
+        --text-primary: #09090b;
+        --text-secondary: #52525b;
+        --text-muted: #71717a;
+        --accent: #059669;
+        --accent-glow: rgba(16, 185, 129, 0.12);
+      }
+      html.dark {
+        --bg-primary: #090a0f;
+        --bg-elevated: #11131c;
+        --bg-hover: #171a26;
+        --border-subtle: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.15);
+        --text-primary: #f4f4f6;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --accent: #34d399;
+        --accent-glow: rgba(52, 211, 153, 0.14);
+      }
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      /* Subtle Linear-style top radial glow & grid */
+      .ambient-glow {
+        background: radial-gradient(
+            65% 420px at 50% 0%,
+            var(--accent-glow),
+            transparent 75%
+          ),
+          radial-gradient(
+            45% 320px at 80% 20px,
+            rgba(99, 102, 241, 0.09),
+            transparent 70%
+          );
+      }
+    </style>
+  </head>
+  <body class="min-h-screen antialiased selection:bg-emerald-500/20 selection:text-emerald-400">
+    <!-- Ambient Top Backdrop -->
+    <div class="ambient-glow pointer-events-none fixed inset-x-0 top-0 h-[520px] -z-10"></div>
+
+    <!-- Sticky Glass Header -->
+    <header class="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/80 backdrop-blur-xl">
+      <div class="mx-auto flex max-w-4xl items-center justify-between px-5 py-3.5">
+        <a href="/" class="group flex items-center gap-3">
+          <div class="relative">
+            <img
+              src="/travis-profile.jpg"
+              alt="Travis Emslander"
+              class="h-8 w-8 rounded-full object-cover ring-1 ring-[var(--border-strong)] transition group-hover:ring-emerald-400/60"
+            />
+            <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[var(--bg-primary)]"></span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sm font-semibold tracking-tight text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors">
+              Travis Emslander
+            </span>
+            <span class="text-[11px] font-mono text-[var(--text-muted)] hidden sm:inline">
+              Minneapolis, MN
+            </span>
+          </div>
+        </a>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Command Palette Search Button -->
+          <button
+            id="open-cmdk-btn"
+            type="button"
+            class="flex items-center gap-2.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+            aria-label="Search posts"
+          >
+            <svg class="h-3.5 w-3.5 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z" />
+            </svg>
+            <span class="hidden sm:inline">Search posts...</span>
+            <kbd class="rounded border border-[var(--border-subtle)] bg-[var(--bg-primary)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
+              ⌘K
+            </kbd>
+          </button>
+
+          <!-- Social & RSS Icons -->
+          <a
+            href="https://github.com/travisemslander"
+            target="_blank"
+            rel="noreferrer noopener"
+            title="GitHub"
+            class="rounded-lg p-2 text-[var(--text-secondary)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+            </svg>
+          </a>
+          <a
+            href="https://linkedin.com/in/travis-emslander"
+            target="_blank"
+            rel="noreferrer noopener"
+            title="LinkedIn"
+            class="rounded-lg p-2 text-[var(--text-secondary)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+              <rect x="2" y="9" width="4" height="12" />
+              <circle cx="4" cy="4" r="2" />
+            </svg>
+          </a>
+          <a
+            href="/rss.xml"
+            title="RSS Feed"
+            class="rounded-lg p-2 text-[var(--text-secondary)] transition hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11a9 9 0 0 1 9 9" />
+              <path d="M4 4a16 16 0 0 1 16 16" />
+              <circle cx="5" cy="19" r="1" />
+            </svg>
+          </a>
+
+          <!-- Theme Toggle -->
+          <button
+            id="theme-toggle-btn"
+            type="button"
+            title="Toggle light/dark theme"
+            class="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-2 text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+          >
+            <svg class="h-4 w-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="4" />
+              <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41" />
+            </svg>
+            <svg class="h-4 w-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-4xl px-5 py-10 sm:py-14">
+      <slot />
+    </main>
+
+    <footer class="mt-20 border-t border-[var(--border-subtle)] py-10">
+      <div class="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 px-5 text-xs text-[var(--text-muted)] sm:flex-row">
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-[var(--text-secondary)]">Travis Emslander</span>
+          <span>·</span>
+          <span>Minneapolis, MN</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="https://github.com/travisemslander" target="_blank" rel="noreferrer" class="hover:text-[var(--text-primary)] transition">GitHub</a>
+          <a href="https://linkedin.com/in/travis-emslander" target="_blank" rel="noreferrer" class="hover:text-[var(--text-primary)] transition">LinkedIn</a>
+          <a href="/rss.xml" class="hover:text-[var(--text-primary)] transition">RSS</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Cmd+K Command Palette Modal -->
+    <div
+      id="cmdk-backdrop"
+      class="fixed inset-0 z-50 hidden items-start justify-center bg-black/60 px-4 pt-[12vh] backdrop-blur-sm"
+    >
+      <div
+        class="w-full max-w-xl overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-elevated)] shadow-2xl"
+        onclick="event.stopPropagation()"
+      >
+        <div class="flex items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3.5">
+          <svg class="h-4 w-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z" />
+          </svg>
+          <input
+            id="cmdk-input"
+            type="text"
+            placeholder="Search all 108 posts by title, topic, or keyword..."
+            class="w-full bg-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none"
+            autocomplete="off"
+          />
+          <kbd class="rounded border border-[var(--border-subtle)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">ESC</kbd>
+        </div>
+        <div id="cmdk-results" class="max-h-[55vh] overflow-y-auto divide-y divide-[var(--border-subtle)] p-2"></div>
+      </div>
+    </div>
+
+    <script is:inline define:vars={{ searchIndex }}>
+      function setupLayoutInteractions() {
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        if (themeBtn) {
+          themeBtn.onclick = () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          };
+        }
+
+        const backdrop = document.getElementById('cmdk-backdrop');
+        const openBtn = document.getElementById('open-cmdk-btn');
+        const input = document.getElementById('cmdk-input');
+        const resultsEl = document.getElementById('cmdk-results');
+
+        function renderCmdkResults(q = '') {
+          if (!resultsEl) return;
+          const query = q.trim().toLowerCase();
+          const matches = searchIndex
+            .filter((item) => {
+              if (!query) return true;
+              return (
+                item.title.toLowerCase().includes(query) ||
+                item.excerpt.toLowerCase().includes(query) ||
+                item.topic.toLowerCase().includes(query) ||
+                (item.domain && item.domain.toLowerCase().includes(query))
+              );
+            })
+            .slice(0, 20);
+
+          if (matches.length === 0) {
+            resultsEl.innerHTML = `<div class="py-10 text-center text-xs text-[var(--text-muted)]">No matching posts found.</div>`;
+            return;
+          }
+
+          resultsEl.innerHTML = matches
+            .map(
+              (m) => `
+              <a href="/posts/${m.slug}/" class="group flex flex-col gap-1 rounded-xl px-3.5 py-2.5 transition hover:bg-[var(--bg-hover)]">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-sm font-medium text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors">${m.title}</span>
+                  <span class="shrink-0 font-mono text-[11px] text-[var(--text-muted)]">${m.date}</span>
+                </div>
+                <p class="line-clamp-1 text-xs text-[var(--text-secondary)]">${m.excerpt}</p>
+              </a>
+            `
+            )
+            .join('');
+        }
+
+        function openCmdk() {
+          if (!backdrop || !input) return;
+          backdrop.classList.remove('hidden');
+          backdrop.classList.add('flex');
+          renderCmdkResults(input.value);
+          setTimeout(() => input.focus(), 10);
+        }
+
+        function closeCmdk() {
+          if (!backdrop) return;
+          backdrop.classList.add('hidden');
+          backdrop.classList.remove('flex');
+        }
+
+        if (openBtn) openBtn.onclick = openCmdk;
+        if (backdrop) backdrop.onclick = closeCmdk;
+        if (input) {
+          input.oninput = (e) => renderCmdkResults(e.target.value);
+        }
+
+        window.onkeydown = (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            if (backdrop?.classList.contains('hidden')) openCmdk();
+            else closeCmdk();
+          } else if (e.key === 'Escape' && backdrop && !backdrop.classList.contains('hidden')) {
+            closeCmdk();
+          }
+        };
+      }
+
+      setupLayoutInteractions();
+      document.addEventListener('astro:after-swap', setupLayoutInteractions);
+    </script>
+  </body>
+</html>
